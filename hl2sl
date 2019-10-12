@@ -1,0 +1,17 @@
+#! /bin/sh
+
+set -e
+
+HARDLINKS='.hardlinks'
+mkdir -p "$HARDLINKS"
+
+find . -type f -links +1 -printf '%i %p\n' |
+    while read inode path; do
+	if ! [ -f "$HARDLINKS/$inode" ]; then
+	    cp -l "$path" "$HARDLINKS/$inode"
+	fi
+	directory="$(dirname $path)"
+	rm -f "./$path"
+	ln -s "$(python2 -c "import os.path; print os.path.relpath('.hardlinks/$inode', '$directory')")" "$path"
+	touch -h -r "$HARDLINKS/$inode" "$path"
+    done
